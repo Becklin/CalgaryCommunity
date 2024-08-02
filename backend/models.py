@@ -4,6 +4,7 @@ from django.contrib.gis.db import models
 
 # Create your models here.
 class Community(models.Model):
+    # id = models.AutoField(primary_key=True)  # 添加主键字段
     class_code = models.CharField(max_length=50)
     comm_code = models.CharField(max_length=50)
     name = models.CharField(max_length=255, unique=True)
@@ -20,8 +21,8 @@ class Community(models.Model):
 
 class CrimesReport(models.Model):
     category = models.CharField(max_length=50)
-    community_name = models.ForeignKey(
-        Community, to_field="name", on_delete=models.CASCADE
+    community = models.ForeignKey(
+        Community, on_delete=models.CASCADE, blank=True, null=True
     )
     january = models.IntegerField(default=0, null=True, blank=True)
     february = models.IntegerField(null=True, blank=True)
@@ -36,5 +37,5 @@ class CrimesReport(models.Model):
     november = models.IntegerField(null=True, blank=True)
     december = models.IntegerField(null=True, blank=True)
 
-    def __str__(self):
-        return self.name
+    # def __str__(self):
+    #     return self.community_name
