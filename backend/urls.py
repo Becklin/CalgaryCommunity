@@ -19,6 +19,11 @@ urlpatterns = [
         views.CrimesReportListView.as_view(),
         name=views.CrimesReportListView.name,
     ),
+    path(
+        "crimesReport/<str:community>",
+        views.CrimesReportDetailView.as_view(),
+        name=views.CrimesReportDetailView.name,
+    ),
 ]
 # enable us to get json data
 urlpatterns = format_suffix_patterns(urlpatterns)

@@ -26,3 +26,14 @@ class CrimesReportListView(generics.ListAPIView):
     queryset = CrimesReport.objects.all()
     serializer_class = CrimesReportSerializer
     name = "crimes-report"
+
+
+# get a community crimes report
+class CrimesReportDetailView(generics.ListAPIView):
+    serializer_class = CrimesReportSerializer
+
+    def get_queryset(self):
+        community = self.kwargs["community"]
+        return CrimesReport.objects.filter(community=community)
+
+    name = "crimes-detail"
