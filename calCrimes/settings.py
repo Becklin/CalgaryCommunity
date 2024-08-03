@@ -52,13 +52,14 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "corsheaders",
     # 3rd part apps
     "django_cleanup.apps.CleanupConfig",
     "rest_framework",
     "rest_framework_gis",
     # Local apps
     "backend.apps.BackendConfig",  # in apps.py
-    "frontend.apps.FrontendConfig",
+    # "frontend.apps.FrontendConfig",
 ]
 
 MIDDLEWARE = [
@@ -66,10 +67,13 @@ MIDDLEWARE = [
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
+
+CORS_ALLOW_ALL_ORIGINS = True
 
 ROOT_URLCONF = "calCrimes.urls"
 
