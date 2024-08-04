@@ -2,7 +2,7 @@ import csv
 import pandas as pd
 import geojson
 from django.core.management.base import BaseCommand
-from django.contrib.gis.geos import GEOSGeometry
+from django.contrib.gis.geos import GEOSGeometry, MultiPolygon, Polygon, LinearRing
 from backend.models import Community
 from datetime import datetime
 
@@ -13,21 +13,10 @@ class Command(BaseCommand):
     def handle(self, *args, **kwargs):
         csv_file_path = "Community_District_Boundaries_20240730.csv"
         data = pd.read_csv(csv_file_path)
-        # Remove duplicates based on 'name' column, keeping the first occurrence
-        print(data.columns)
-        # yes = data.drop_duplicates(keep="first")
-        # print("好啊", yes)
-        # Get the record where 'coe' column matches the specified value
-        # record = data.loc[data["NAME"] == "AUBURN BAY"]
 
-        # print("Record as DataFrame:\n", record)
-
-        row_count = len(data)
-        print("總數", row_count)
         for index, row in data.iterrows():
-            multipolygon = GEOSGeometry(row["MULTIPOLYGON"])
-            if row["NAME"] == "AUBURN BAY":
-                print("就你", row["NAME"])
+            original_multipolygon = GEOSGeometry(row["MULTIPOLYGON"])
+            multipolygon = self.swap_lat_lon_in_multipolygon(original_multipolygon)
             community_geo_data = Community(
                 id=index,
                 class_code=row["CLASS_CODE"],
@@ -40,7 +29,16 @@ class Command(BaseCommand):
                 modified_dt=datetime.strptime(row["MODIFIED_DT"], "%Y/%m/%d"),
                 multipolygon=multipolygon,
             )
-            # print("geo_data", community_geo_data)
             community_geo_data.save()
 
         self.stdout.write(self.style.SUCCESS("Successfully loaded geospatial data"))
+
+    def swap_lat_lon_in_multipolygon(self, multipolygon):
+        new_polygons = []
+        for polygon in multipolygon:
+            new_rings = []
+            for ring in polygon:
+                new_coords = [(y, x) for x, y in ring.coords]
+                new_rings.append(LinearRing(new_coords))
+            new_polygons.append(Polygon(*new_rings))
+        return MultiPolygon(new_polygons)
