@@ -19,7 +19,7 @@ class Command(BaseCommand):
             multipolygon = self.swap_lat_lon_in_multipolygon(original_multipolygon)
             community_geo_data = Community(
                 id=index,
-                class_code=row["CLASS_CODE"],
+                class_code=self.to_pascal_case(row["CLASS_CODE"]),
                 comm_code=row["COMM_CODE"],
                 name=row["NAME"],
                 sector=row["SECTOR"],
@@ -42,3 +42,6 @@ class Command(BaseCommand):
                 new_rings.append(LinearRing(new_coords))
             new_polygons.append(Polygon(*new_rings))
         return MultiPolygon(new_polygons)
+
+    def to_pascal_case(s):
+        return "".join(word.capitalize() for word in s.split())
