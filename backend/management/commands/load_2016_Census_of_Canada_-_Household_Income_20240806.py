@@ -1,7 +1,7 @@
 import csv
 import pandas as pd
 from django.core.management.base import BaseCommand
-from django.contrib.gis.geos import GEOSGeometry
+from django.contrib.gis.geos import GEOSGeometry, MultiPolygon, Polygon, LinearRing
 from backend.models import Income
 
 
@@ -12,8 +12,8 @@ class Command(BaseCommand):
         csv_file_path = "2016_Census_of_Canada_-_Household_Income_20240806.csv"
         data = pd.read_csv(csv_file_path)
         for index, row in data.iterrows():
-            print(row)
-            polygon = GEOSGeometry(row["polygon"])
+            original_polygon = GEOSGeometry(row["polygon"])
+            polygon = self.swap_lat_lon_in_multipolygon(original_polygon)
 
             service_geo_data = Income(
                 ward=row["Ward"],
@@ -34,3 +34,13 @@ class Command(BaseCommand):
             service_geo_data.save()
 
         self.stdout.write(self.style.SUCCESS("Successfully loaded geospatial data"))
+
+    def swap_lat_lon_in_multipolygon(self, multipolygon):
+        new_polygons = []
+        for polygon in multipolygon:
+            new_rings = []
+            for ring in polygon:
+                new_coords = [(y, x) for x, y in ring.coords]
+                new_rings.append(LinearRing(new_coords))
+            new_polygons.append(Polygon(*new_rings))
+        return MultiPolygon(new_polygons)

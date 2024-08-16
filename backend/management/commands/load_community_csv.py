@@ -1,6 +1,5 @@
 import csv
 import pandas as pd
-import geojson
 from django.core.management.base import BaseCommand
 from django.contrib.gis.geos import GEOSGeometry, MultiPolygon, Polygon, LinearRing
 from backend.models import Community
@@ -13,13 +12,13 @@ class Command(BaseCommand):
     def handle(self, *args, **kwargs):
         csv_file_path = "Community_District_Boundaries_20240730.csv"
         data = pd.read_csv(csv_file_path)
-
         for index, row in data.iterrows():
             original_multipolygon = GEOSGeometry(row["MULTIPOLYGON"])
             multipolygon = self.swap_lat_lon_in_multipolygon(original_multipolygon)
             community_geo_data = Community(
                 id=index,
-                class_code=self.to_pascal_case(row["CLASS_CODE"]),
+                class_name=self.to_pascal_case(row["CLASS"]),
+                class_code=row["CLASS_CODE"],
                 comm_code=row["COMM_CODE"],
                 name=row["NAME"],
                 sector=row["SECTOR"],
@@ -43,5 +42,5 @@ class Command(BaseCommand):
             new_polygons.append(Polygon(*new_rings))
         return MultiPolygon(new_polygons)
 
-    def to_pascal_case(s):
+    def to_pascal_case(self, s):
         return "".join(word.capitalize() for word in s.split())
