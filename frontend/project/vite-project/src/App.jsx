@@ -1,5 +1,6 @@
 import "./App.css";
 import { React, useEffect, useState } from "react";
+import { Button, InputNumber, Slider, Form } from "antd";
 import {
   MapContainer,
   TileLayer,
@@ -33,6 +34,18 @@ function App() {
     } finally {
       setLoading(false);
     }
+  };
+  const onFinish = (values) => {
+    console.log("Success:", values);
+    fetch("http://localhost:8000/api/v1/rank/", {
+      method: "POST",
+      body: values,
+    }).then((data) => {
+      console.log("成功", data);
+    });
+  };
+  const onFinishFailed = (errorInfo) => {
+    console.log("Failed:", errorInfo);
   };
   useEffect(() => {
     const getData = async () => {
@@ -104,7 +117,6 @@ function App() {
               : class_colors[comm.class_code],
             fillColor: "yellow",
           }}
-          // color="yellow"
           positions={multipolygon.coordinates}
         >
           <Tooltip sticky>
@@ -214,16 +226,88 @@ function App() {
       <MapContainer
         center={[51.0447, -114.0719]}
         zoom={13}
-        style={{ height: "100vh", width: "100vw" }}
+        style={{ height: "100vh", width: "100vw", zIndex: 0 }}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        {displayIncome(income)}
         {displayCommunities(communities)}
-        {displayServices(services)}
+        {displayIncome(income)}
+        {/* {displayServices(services)} */}
       </MapContainer>
+      <Form
+        name="basic"
+        labelCol={{
+          span: 8,
+        }}
+        wrapperCol={{
+          span: 16,
+        }}
+        style={{
+          maxWidth: 600,
+          position: "fixed",
+          top: "120px",
+          left: "30px",
+          zIndex: 1,
+          background: "white",
+          padding: "10px",
+        }}
+        initialValues={{
+          remember: true,
+        }}
+        onFinish={onFinish}
+        onFinishFailed={onFinishFailed}
+        autoComplete="off"
+      >
+        <Form.Item label="Services">
+          <Form.Item name="input-number" noStyle>
+            <InputNumber min={1} max={10} />
+          </Form.Item>
+          <span
+            className="ant-form-text"
+            style={{
+              marginInlineStart: 8,
+            }}
+          >
+            Kilometers
+          </span>
+        </Form.Item>
+        <Form.Item name="income" label="Income">
+          <Slider
+            marks={{
+              0: "A",
+              20: "B",
+              40: "C",
+              60: "D",
+              80: "E",
+              100: "F",
+            }}
+          />
+        </Form.Item>
+        <Form.Item name="crimesReport" label="Crimes Report">
+          <Slider
+            marks={{
+              0: "A",
+              20: "B",
+              40: "C",
+              60: "D",
+              80: "E",
+              100: "F",
+            }}
+          />
+        </Form.Item>
+        <Form.Item
+          wrapperCol={{
+            offset: 8,
+            span: 16,
+          }}
+        >
+          <Button type="primary" htmlType="submit">
+            Submit
+          </Button>
+        </Form.Item>
+      </Form>
     </>
   );
 }

@@ -39,6 +39,11 @@ urlpatterns = [
         views.community_service_counts,
         name="community_service_counts",
     ),
+    path(
+        "community-rank/",
+        views.community_rank.as_view(),
+        name="community_rank",
+    ),
 ]
 # enable us to get json data
 urlpatterns = format_suffix_patterns(urlpatterns)
