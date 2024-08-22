@@ -1,0 +1,26 @@
+.ranking {
+    text-align: left;
+    padding: 4px 12px;
+    font-size: 1rem;
+    border-bottom: 1px solid rgb(208, 208, 208);
+}
+.ranking-score {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center; 
+    border-radius: 15px;
+    background: white;
+    color: rgb(107, 81, 255);
+    width: 25px;
+    height:25px;
+    font-size: 12px;
+    font-weight: bold;
+    margin-right: 8px
+}
+.ranking-info {
+    font-size: 0.8rem;
+    display: flex;
+    justify-content: right;
+    overflow: hidden;
+    height: 30px;
+}

@@ -1,5 +1,7 @@
 from numpy import sort
 import pandas as pd
+import json
+from django.contrib.gis.geos import MultiPolygon, Point
 from django.shortcuts import render
 from rest_framework import generics
 from django.http import JsonResponse
@@ -10,8 +12,8 @@ from .serializers import (
     CrimesReportSerializer,
     ServiceSerializer,
     IncomeSerializer,
+    RankingSerializer,
 )
-from django.db import connection
 from .services import fetch_crimes_reports
 
 
@@ -72,11 +74,25 @@ def community_service_counts(request):
 
 class community_rank(generics.ListAPIView):
     name = "community_rank"
+    # serializer_class = RankingSerializer
 
     def get(self, request, *args, **kwargs):
         # prepare data
         records = fetch_crimes_reports()
         community = list(Community.objects.all().values())
+        for comm in community:
+            polygon = comm.get("multipolygon")
+            if isinstance(polygon, MultiPolygon):
+                # Geodjango geojson
+                geojson = polygon.geojson
+                comm["multipolygon"] = geojson
+                # serialize type of point
+                serialized_point = {
+                    "type": "Point",
+                    "coordinates": [polygon.centroid.x, polygon.centroid.y],
+                }
+                comm["centroid"] = serialized_point
+
         community = sorted(community, key=lambda x: x.get("id"))
         services = Community.objects.services_within_5km()
 
@@ -84,8 +100,8 @@ class community_rank(generics.ListAPIView):
         ids_in_communities = {comm["id"] for comm in community}
         ids_in_records = {record["community_id"] for record in records}
         missing_ids = ids_in_communities - ids_in_records
+        records = sorted(records, key=lambda x: x.get("community_id"))
 
-        serviceList = list(services.items())
         for id in missing_ids:
             community[:] = [comm for comm in community if comm.get("id") != id]
             services.pop(id, None)
@@ -138,26 +154,51 @@ class community_rank(generics.ListAPIView):
 
         # 設置 'index' 為 DataFrame 的索引
         service_df.set_index("index", inplace=True)
-
-        # # Step 2: 將 info_list 轉為 DataFrame
+        # Step 2: 將 info_list 轉為 DataFrame
         community_df = pd.DataFrame(community)
+        # Step 2: 將 info_list 轉為 DataFrame
+        # 将 Decimal 转换为 float
+        for item in records:
+            item["total_whole_year"] = float(item["total_whole_year"])
+        # 创建 DataFrame
 
-        # # Step 3: 將 scores_list 加入 info_df
+        records_df = pd.DataFrame(records)
+        # Step 3: 將 scores_list 加入 info_df
         community_df["score"] = desirability_scores
-
         # Step 4: 合併 services_df 和 info_df
-        final_df = pd.merge(community_df, service_df, left_on="id", right_index=True)
-
+        first_df = pd.merge(
+            community_df,
+            service_df,
+            left_on=["id"],
+            right_index=True,
+        )
+        final_df = pd.merge(
+            first_df,
+            records_df,
+            left_on=["id"],
+            right_index=True,
+        )
         # # Step 5: 選擇需要的列並改列名
         final_df = final_df[
-            ["id", "income", "service_count", "name", "class_name", "score"]
+            [
+                "id",
+                "income",
+                "sector",
+                "service_count",
+                "name",
+                "class_name",
+                "score",
+                "multipolygon",
+                "centroid",
+                "total_whole_year",
+            ]
         ]
         final_df.rename(columns={"class_name": "type"}, inplace=True)
+        final_df.rename(columns={"total_whole_year": "crimes_count"}, inplace=True)
 
         # # Step 6: 轉換成 list of dict
         result = final_df.to_dict(orient="records")
-
-        # # 結果輸出
+        # for item in result:
         return JsonResponse({"data": result})
 
 

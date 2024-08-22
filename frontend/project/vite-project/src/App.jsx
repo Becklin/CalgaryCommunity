@@ -1,6 +1,7 @@
+/* eslint-disable react/prop-types */
 import "./App.css";
-import { React, useEffect, useState } from "react";
-import { Button, InputNumber, Slider, Form } from "antd";
+import { Component, React, useEffect, useState } from "react";
+import { Col, Row, Button, InputNumber, Slider, Form } from "antd";
 import {
   MapContainer,
   TileLayer,
@@ -12,12 +13,15 @@ import {
 
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import RankingList from "./components/RankingList/rankingList";
+import MapController from "./components/MapController";
 
 function App() {
-  const [communities, setCommunities] = useState([]);
+  const [ranking, setRanking] = useState([]);
   const [services, setService] = useState([]);
   const [income, setIncome] = useState([]);
   const [serviceCommunities, setServiceCommunities] = useState([]);
+  const [position, setPosition] = useState([51.0447, -114.0719]);
 
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -37,9 +41,13 @@ function App() {
   };
   const onFinish = (values) => {
     console.log("Success:", values);
-    fetch("http://localhost:8000/api/v1/rank/", {
-      method: "POST",
-      body: values,
+    fetch("http://localhost:8000/api/v1/community-rank/", {
+      // method: "GET",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      // body: values,
     }).then((data) => {
       console.log("成功", data);
     });
@@ -54,6 +62,7 @@ function App() {
         "http://localhost:8000/api/v1/crimesReport/",
         "http://localhost:8000/api/v1/service/",
         "http://localhost:8000/api/v1/income/",
+        "http://localhost:8000/api/v1/community-rank/",
       ];
       try {
         const jsons = await Promise.all(
@@ -67,19 +76,9 @@ function App() {
           (a, b) =>
             a.total_household_total_income - b.total_household_total_income
         );
-        const crimeReport = jsons[1].data;
-        const communitiesWithCrimeReport = jsons[0].map((comm, index) => {
-          const { id } = comm;
-          const hasComm = crimeReport.find(
-            ({ community_id }) => community_id === id
-          );
-          if (hasComm)
-            comm["crimeReportCount"] = Number(hasComm.total_whole_year);
-          return comm;
-        });
-        setCommunities(communitiesWithCrimeReport);
         setService(jsons[2]);
         setIncome(orderedIncome);
+        setRanking(jsons[4].data);
       } catch (error) {
         setError(error);
       } finally {
@@ -97,9 +96,10 @@ function App() {
     4: "#984ea3",
   };
 
-  const displayCommunities = (communities) => {
-    const results = communities.map((comm, index) => {
-      const { crimeReportCount, name, sector, multipolygon } = comm;
+  const displayCommunities = (ranking) => {
+    const results = ranking.map((comm, index) => {
+      const { name, score, income, sector, service_count, multipolygon } = comm;
+
       let isServiceCommunities;
       if (serviceCommunities) {
         for (const key in serviceCommunities) {
@@ -117,7 +117,7 @@ function App() {
               : class_colors[comm.class_code],
             fillColor: "yellow",
           }}
-          positions={multipolygon.coordinates}
+          positions={JSON.parse(multipolygon).coordinates}
         >
           <Tooltip sticky>
             <div className="">
@@ -125,7 +125,11 @@ function App() {
               <br />
               <span>{sector}</span>
               <br />
-              <span>crimes :{crimeReportCount}</span>
+              <span>crimes :{service_count}</span>
+              <br />
+              <span>income :{income}</span>
+              <br />
+              <span>score :{score}</span>
             </div>
           </Tooltip>
         </Polygon>
@@ -221,94 +225,85 @@ function App() {
     return results;
   };
   return (
-    <>
-      <div onClick={loadTop5Communities}>Top 5 community</div>
-      <MapContainer
-        center={[51.0447, -114.0719]}
-        zoom={13}
-        style={{ height: "100vh", width: "100vw", zIndex: 0 }}
-      >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
-        {displayCommunities(communities)}
-        {displayIncome(income)}
-        {/* {displayServices(services)} */}
-      </MapContainer>
-      <Form
-        name="basic"
-        labelCol={{
-          span: 8,
-        }}
-        wrapperCol={{
-          span: 16,
-        }}
-        style={{
-          maxWidth: 600,
-          position: "fixed",
-          top: "120px",
-          left: "30px",
-          zIndex: 1,
-          background: "white",
-          padding: "10px",
-        }}
-        initialValues={{
-          remember: true,
-        }}
-        onFinish={onFinish}
-        onFinishFailed={onFinishFailed}
-        autoComplete="off"
-      >
-        <Form.Item label="Services">
-          <Form.Item name="input-number" noStyle>
-            <InputNumber min={1} max={10} />
-          </Form.Item>
-          <span
-            className="ant-form-text"
-            style={{
-              marginInlineStart: 8,
-            }}
-          >
-            Kilometers
-          </span>
-        </Form.Item>
-        <Form.Item name="income" label="Income">
-          <Slider
-            marks={{
-              0: "A",
-              20: "B",
-              40: "C",
-              60: "D",
-              80: "E",
-              100: "F",
-            }}
-          />
-        </Form.Item>
-        <Form.Item name="crimesReport" label="Crimes Report">
-          <Slider
-            marks={{
-              0: "A",
-              20: "B",
-              40: "C",
-              60: "D",
-              80: "E",
-              100: "F",
-            }}
-          />
-        </Form.Item>
-        <Form.Item
-          wrapperCol={{
-            offset: 8,
-            span: 16,
-          }}
+    <Row>
+      <Col span={18} push={6}>
+        <MapContainer
+          center={[51.0447, -114.0719]}
+          zoom={13}
+          style={{ height: "100vh", width: "100vw", zIndex: 0 }}
         >
-          <Button type="primary" htmlType="submit">
-            Submit
-          </Button>
-        </Form.Item>
-      </Form>
-    </>
+          <TileLayer
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          />
+          {displayCommunities(ranking)}
+          {displayIncome(income)}
+          {displayServices(services)}
+          <MapController position={position} />
+        </MapContainer>
+      </Col>
+      <Col className="sidecar" span={6} pull={18} style={{ height: "100vh" }}>
+        <Form
+          name="basic"
+          style={{
+            background: "white",
+            padding: "10px",
+          }}
+          initialValues={{
+            remember: true,
+          }}
+          onFinish={onFinish}
+          onFinishFailed={onFinishFailed}
+          autoComplete="off"
+        >
+          <Form.Item label="Services">
+            <Form.Item name="input-number" noStyle>
+              <InputNumber min={1} max={10} />
+            </Form.Item>
+            <span
+              className="ant-form-text"
+              style={{
+                marginInlineStart: 8,
+              }}
+            >
+              Kilometers
+            </span>
+          </Form.Item>
+          <Form.Item name="income" label="Income">
+            <Slider
+              marks={{
+                0: "A",
+                20: "B",
+                40: "C",
+                60: "D",
+                80: "E",
+                100: "F",
+              }}
+            />
+          </Form.Item>
+          <Form.Item name="crimesReport" label="Crimes Report">
+            <Slider
+              marks={{
+                0: "A",
+                20: "B",
+                40: "C",
+                60: "D",
+                80: "E",
+                100: "F",
+              }}
+            />
+          </Form.Item>
+          <Form.Item>
+            <Button type="primary" htmlType="submit">
+              Submit
+            </Button>
+          </Form.Item>
+        </Form>
+        <div className="ranking-wrapper">
+          <RankingList ranking={ranking} setPosition={setPosition} />
+        </div>
+      </Col>
+    </Row>
   );
 }
 

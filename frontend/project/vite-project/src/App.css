@@ -2,7 +2,9 @@
   margin: 0 auto;
   text-align: center;
 }
-
+body {
+  overflow: hidden;
+}
 .custom-marker {
   background-color: transparent;
   border: none;
@@ -34,4 +36,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
+}
+.sidecar {
+  display: flex;
+  flex-direction: column;
+}
+.ranking-wrapper {
+  overflow-y: auto;
 }

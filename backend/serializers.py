@@ -24,3 +24,10 @@ class IncomeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Income
         fields = "__all__"
+
+
+class RankingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Community
+        fields = "__all__"
+        # 'class_name' 将会重命名为 'type' 在视图中处理
