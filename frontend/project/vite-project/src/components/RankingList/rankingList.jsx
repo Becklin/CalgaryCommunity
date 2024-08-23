@@ -6,13 +6,16 @@ function RankingList({ ranking, setPosition }) {
   const content = ranking.map((comm, index) => {
     const { name, score, income, service_count, centroid } = comm;
     return (
-      <li className="ranking" key={index}>
+      <li
+        className="ranking"
+        key={index + name}
+        onClick={setPosition.bind(null, centroid.coordinates)}
+      >
         <i className="ranking-score">{(score * 1000).toFixed()}</i>
         {name}
         <div className="ranking-info">
           <span>CAD: {income}</span>
           <span>services: {service_count}</span>
-          <button onClick={setPosition.bind(null, centroid.coordinates)} />
         </div>
       </li>
     );

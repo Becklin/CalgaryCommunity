@@ -26,8 +26,7 @@ class IncomeSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class RankingSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Community
-        fields = "__all__"
-        # 'class_name' 将会重命名为 'type' 在视图中处理
+class RankingSerializer(serializers.Serializer):
+    crimes = serializers.IntegerField()
+    services = serializers.IntegerField()
+    income = serializers.IntegerField()

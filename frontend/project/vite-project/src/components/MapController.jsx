@@ -6,7 +6,7 @@ export default function MapController({ position, zoom }) {
   useEffect(() => {
     if (position) {
       console.log(position);
-      map.setView(position, zoom);
+      map.setView(position, 13);
     }
   }, [map, position, zoom]);
   return null;

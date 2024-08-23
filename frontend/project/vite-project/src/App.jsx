@@ -1,7 +1,7 @@
 /* eslint-disable react/prop-types */
 import "./App.css";
-import { Component, React, useEffect, useState } from "react";
-import { Col, Row, Button, InputNumber, Slider, Form } from "antd";
+import { React, useEffect, useState } from "react";
+import { Col, Row } from "antd";
 import {
   MapContainer,
   TileLayer,
@@ -15,11 +15,15 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import RankingList from "./components/RankingList/rankingList";
 import MapController from "./components/MapController";
-
+import WeightsForm from "./components/WeightsForm/WeightsForm";
+import Hospital from "./assets/hospital.js";
+console.log(Hospital);
 function App() {
   const [ranking, setRanking] = useState([]);
   const [services, setService] = useState([]);
   const [income, setIncome] = useState([]);
+  const [values, setValues] = useState({ crimes: 4, services: 4, income: 2 });
+
   const [serviceCommunities, setServiceCommunities] = useState([]);
   const [position, setPosition] = useState([51.0447, -114.0719]);
 
@@ -39,18 +43,61 @@ function App() {
       setLoading(false);
     }
   };
-  const onFinish = (values) => {
-    console.log("Success:", values);
-    fetch("http://localhost:8000/api/v1/community-rank/", {
-      // method: "GET",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-      // body: values,
-    }).then((data) => {
-      console.log("成功", data);
-    });
+  const isNotEqualToTen = (value, type) => {
+    let total = value;
+    for (let val in values) {
+      if (val === type) continue;
+      total += values[val];
+    }
+    console.log("total", total);
+    return total !== 10;
+  };
+  const onCrimesChange = (value) => {
+    if (isNotEqualToTen(value, "crimes")) {
+      setValues({
+        ...values,
+        crimes: value,
+      });
+    }
+  };
+  const onServicesChange = (value) => {
+    if (isNotEqualToTen(value, "services")) {
+      setValues({
+        ...values,
+        services: value,
+      });
+    }
+  };
+  const onIncomeChange = (value) => {
+    if (isNotEqualToTen(value, "income")) {
+      setValues({
+        ...values,
+        income: value,
+      });
+    }
+  };
+  const onFinish = async () => {
+    try {
+      const rankingResponse = await fetch(
+        "http://localhost:8000/api/v1/community-rank/",
+        {
+          method: "POST",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            crimes: values.crimes,
+            services: values.services,
+            income: values.income,
+          }),
+        }
+      );
+      const rankingJson = await rankingResponse.json();
+      setRanking(rankingJson.data);
+    } catch (error) {
+      throw error.message;
+    }
   };
   const onFinishFailed = (errorInfo) => {
     console.log("Failed:", errorInfo);
@@ -62,7 +109,6 @@ function App() {
         "http://localhost:8000/api/v1/crimesReport/",
         "http://localhost:8000/api/v1/service/",
         "http://localhost:8000/api/v1/income/",
-        "http://localhost:8000/api/v1/community-rank/",
       ];
       try {
         const jsons = await Promise.all(
@@ -76,9 +122,26 @@ function App() {
           (a, b) =>
             a.total_household_total_income - b.total_household_total_income
         );
+
+        const rankingResp = await fetch(
+          "http://localhost:8000/api/v1/community-rank/",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              crimes: values.crimes,
+              services: values.services,
+              income: values.income,
+            }),
+          }
+        );
+        const rankingJson = await rankingResp.json();
+
         setService(jsons[2]);
         setIncome(orderedIncome);
-        setRanking(jsons[4].data);
+        setRanking(rankingJson.data);
       } catch (error) {
         setError(error);
       } finally {
@@ -86,7 +149,7 @@ function App() {
       }
     };
     getData();
-  }, []);
+  }, [values.crimes, values.income, values.services]);
   if (loading) return <p>Loading...</p>;
   if (error) return <p>Error: {error.message}</p>;
   const class_colors = {
@@ -140,14 +203,14 @@ function App() {
   const displayServices = (services) => {
     let customIcon = L.divIcon({
       className: "custom-marker",
-      html: '<div class="custom-marker-inner"></div>',
+      html: Hospital,
     });
     const hospital = L.divIcon({
       className: "custom-marker-hospital",
-      html: '<div class="custom-marker-inner-hospital"></div>',
+      html: Hospital,
     });
     const attraction = L.divIcon({
-      className: "custom-marker-hospital",
+      className: "custom-marker-attraction",
       html: '<div class="custom-marker-inner-attraction"></div>',
     });
     const transform = (type, { point: { coordinates }, name, address }) => {
@@ -224,6 +287,12 @@ function App() {
     });
     return results;
   };
+  const getMaxValue = (currentInput) => {
+    const total =
+      values.crimes + values.services + values.income - values[currentInput];
+    return 10 - total;
+  };
+
   return (
     <Row>
       <Col span={18} push={6}>
@@ -236,69 +305,22 @@ function App() {
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
-          {displayCommunities(ranking)}
           {displayIncome(income)}
+          {displayCommunities(ranking)}
           {displayServices(services)}
           <MapController position={position} />
         </MapContainer>
       </Col>
       <Col className="sidecar" span={6} pull={18} style={{ height: "100vh" }}>
-        <Form
-          name="basic"
-          style={{
-            background: "white",
-            padding: "10px",
-          }}
-          initialValues={{
-            remember: true,
-          }}
+        <WeightsForm
           onFinish={onFinish}
           onFinishFailed={onFinishFailed}
-          autoComplete="off"
-        >
-          <Form.Item label="Services">
-            <Form.Item name="input-number" noStyle>
-              <InputNumber min={1} max={10} />
-            </Form.Item>
-            <span
-              className="ant-form-text"
-              style={{
-                marginInlineStart: 8,
-              }}
-            >
-              Kilometers
-            </span>
-          </Form.Item>
-          <Form.Item name="income" label="Income">
-            <Slider
-              marks={{
-                0: "A",
-                20: "B",
-                40: "C",
-                60: "D",
-                80: "E",
-                100: "F",
-              }}
-            />
-          </Form.Item>
-          <Form.Item name="crimesReport" label="Crimes Report">
-            <Slider
-              marks={{
-                0: "A",
-                20: "B",
-                40: "C",
-                60: "D",
-                80: "E",
-                100: "F",
-              }}
-            />
-          </Form.Item>
-          <Form.Item>
-            <Button type="primary" htmlType="submit">
-              Submit
-            </Button>
-          </Form.Item>
-        </Form>
+          getMaxValue={getMaxValue}
+          values={values}
+          onCrimesChange={onCrimesChange}
+          onServicesChange={onServicesChange}
+          onIncomeChange={onIncomeChange}
+        />
         <div className="ranking-wrapper">
           <RankingList ranking={ranking} setPosition={setPosition} />
         </div>

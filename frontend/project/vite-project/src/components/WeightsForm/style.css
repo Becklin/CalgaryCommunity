@@ -1,0 +1,8 @@
+.inputNumber {
+    height:60px !important;
+    font-size: 2.4rem !important;
+    width: 90px !important;
+  }
+  .submit-wrapper {
+    float: right;
+  }

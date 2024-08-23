@@ -72,11 +72,17 @@ def community_service_counts(request):
     return JsonResponse(results)
 
 
-class community_rank(generics.ListAPIView):
+class community_rank(generics.CreateAPIView):
     name = "community_rank"
     # serializer_class = RankingSerializer
 
-    def get(self, request, *args, **kwargs):
+    def post(self, request, *args, **kwargs):
+        serializer = RankingSerializer(data=request.data)
+        if serializer.is_valid():
+            crimesWeights = serializer.validated_data["crimes"]
+            servicesWeights = serializer.validated_data["services"]
+            incomeWeights = serializer.validated_data["income"]
+
         # prepare data
         records = fetch_crimes_reports()
         community = list(Community.objects.all().values())
@@ -133,9 +139,9 @@ class community_rank(generics.ListAPIView):
             for r in records
         ]
         # Weights
-        crime_weight = 0.4
-        income_weight = 0.2
-        service_weight = 0.4
+        crime_weight = crimesWeights / 10
+        income_weight = servicesWeights / 10
+        service_weight = incomeWeights / 10
         # Calculate desirability scores
         desirability_scores = [
             float(Decimal(c) * Decimal(crime_weight))
@@ -195,7 +201,7 @@ class community_rank(generics.ListAPIView):
         ]
         final_df.rename(columns={"class_name": "type"}, inplace=True)
         final_df.rename(columns={"total_whole_year": "crimes_count"}, inplace=True)
-
+        final_df = final_df.sort_values(by="score", ascending=False)
         # # Step 6: 轉換成 list of dict
         result = final_df.to_dict(orient="records")
         # for item in result:

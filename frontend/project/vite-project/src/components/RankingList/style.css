@@ -3,6 +3,10 @@
     padding: 4px 12px;
     font-size: 1rem;
     border-bottom: 1px solid rgb(208, 208, 208);
+    cursor: pointer;
+}
+.ranking:hover {
+    background-color: rgb(245, 245, 245);
 }
 .ranking-score {
     display: inline-flex;
