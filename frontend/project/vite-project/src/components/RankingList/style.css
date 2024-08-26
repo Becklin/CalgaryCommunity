@@ -1,9 +1,30 @@
 .ranking {
     text-align: left;
-    padding: 4px 12px;
-    font-size: 1rem;
+    padding: 4px 12px 4px 0px;
+    background-color: #ffffff;
+    /* color: rgb(26, 26, 26); */
     border-bottom: 1px solid rgb(208, 208, 208);
     cursor: pointer;
+    display: flex;
+}
+.ranking-title {
+    color: rgb(126, 126, 126);
+    font-weight: 700;
+    font-size: 0.8rem;
+    letter-spacing: 2px;
+}
+.ranking-order {
+    font-style: oblique;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center; 
+    width: 20px;
+    border-radius: 10px;
+    color: rgb(107, 81, 255);
+    font-size: 1.4rem;
+    align-self: baseline;
+    margin: 0px 16px 0px 8px;
+    font-weight: 700;
 }
 .ranking:hover {
     background-color: rgb(245, 245, 245);
@@ -14,7 +35,7 @@
     align-items: center; 
     border-radius: 15px;
     background: white;
-    color: rgb(107, 81, 255);
+
     width: 25px;
     height:25px;
     font-size: 12px;
@@ -24,7 +45,11 @@
 .ranking-info {
     font-size: 0.8rem;
     display: flex;
-    justify-content: right;
+    justify-content: left;
     overflow: hidden;
-    height: 30px;
+    height: 40px;
+}
+.ranking-info span {
+    display: inline-block;
+    margin: 0px 4px;
 }

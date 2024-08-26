@@ -1,8 +1,28 @@
-.inputNumber {
+ .inputNumber {
     height:60px !important;
     font-size: 2.4rem !important;
-    width: 90px !important;
+    width: 100px !important;
+    margin: 0px 4px;
   }
   .submit-wrapper {
     float: right;
+    width: 30%;
+  }
+  .form-question {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    width: 15px;
+    height: 15px;
+    border-radius:10px;
+    background-color: #ffffff;
+    border: 1px solid rgb(32, 32, 32);
+    margin-right: 8px;
+  }
+  .ant-form-item-label {
+    letter-spacing: 4px;
+    /* font-weight: 700; */
+    margin-left: 4px;
+    display: inline-block;
+    color: rgb(126, 126, 126) !important;
   }

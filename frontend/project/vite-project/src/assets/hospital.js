@@ -1,4 +1,4 @@
-const hospital = `<svg fill="#ff0000" height="20px" width="20px" version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" 
+const hospital = `<svg fill="#ff0000" height="15px" width="15px" version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" 
 	 viewBox="0 0 500 500" xml:space="preserve">
 <g>
 	<g>

@@ -1,6 +1,6 @@
 /* eslint-disable react/prop-types */
 import React from "react";
-import { Button, InputNumber, Form } from "antd";
+import { Button, InputNumber, Form, Tooltip } from "antd";
 import "./style.css";
 
 function WeightsForm(props) {
@@ -18,6 +18,7 @@ function WeightsForm(props) {
       style={{
         background: "white",
         padding: "10px",
+        fontFamily: "Courier New', Courier, monospace",
       }}
       initialValues={{
         remember: true,
@@ -64,12 +65,20 @@ function WeightsForm(props) {
           />
         </Form.Item>
       </div>
-      <Form.Item>
+      <Form.Item
+        style={{
+          textAlign: "right",
+        }}
+      >
+        <Tooltip title="Total weights must be equal to 10">
+          <span className="form-question">?</span>
+        </Tooltip>
         <Button
+          disabled={values.crimes + values.services + values.income !== 10}
           className="submit-wrapper"
           type="primary"
           htmlType="submit"
-          size="large"
+          size="small"
         >
           CHECK
         </Button>

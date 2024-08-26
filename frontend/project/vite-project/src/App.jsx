@@ -1,7 +1,7 @@
 /* eslint-disable react/prop-types */
 import "./App.css";
-import { React, useEffect, useState } from "react";
-import { Col, Row } from "antd";
+import { React, useEffect, useState, useCallback } from "react";
+import { Skeleton, Divider } from "antd";
 import {
   MapContainer,
   TileLayer,
@@ -16,68 +16,41 @@ import "leaflet/dist/leaflet.css";
 import RankingList from "./components/RankingList/rankingList";
 import MapController from "./components/MapController";
 import WeightsForm from "./components/WeightsForm/WeightsForm";
-import Hospital from "./assets/hospital.js";
-console.log(Hospital);
+import Legend from "./components/Legend/Legend";
+import ZoomHandler from "./components/ZoomHandler";
+
 function App() {
   const [ranking, setRanking] = useState([]);
   const [services, setService] = useState([]);
-  const [income, setIncome] = useState([]);
   const [values, setValues] = useState({ crimes: 4, services: 4, income: 2 });
-
-  const [serviceCommunities, setServiceCommunities] = useState([]);
   const [position, setPosition] = useState([51.0447, -114.0719]);
+  const [highlightedCommunity, setHighlightedCommunity] = useState();
 
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
-  const loadTop5Communities = async () => {
-    try {
-      const resp = await fetch(
-        "http://localhost:8000/api/v1/community-service-counts/"
-      );
-      const json = await resp.json();
-      setServiceCommunities(json);
-      return json;
-    } catch (error) {
-      setError(error);
-    } finally {
-      setLoading(false);
-    }
-  };
-  const isNotEqualToTen = (value, type) => {
-    let total = value;
-    for (let val in values) {
-      if (val === type) continue;
-      total += values[val];
-    }
-    console.log("total", total);
-    return total !== 10;
-  };
+  const [zoomLevel, setZoomLevel] = useState(13);
+
   const onCrimesChange = (value) => {
-    if (isNotEqualToTen(value, "crimes")) {
-      setValues({
-        ...values,
-        crimes: value,
-      });
-    }
+    setValues({
+      ...values,
+      crimes: value,
+    });
   };
   const onServicesChange = (value) => {
-    if (isNotEqualToTen(value, "services")) {
-      setValues({
-        ...values,
-        services: value,
-      });
-    }
+    setValues({
+      ...values,
+      services: value,
+    });
   };
   const onIncomeChange = (value) => {
-    if (isNotEqualToTen(value, "income")) {
-      setValues({
-        ...values,
-        income: value,
-      });
-    }
+    setValues({
+      ...values,
+      income: value,
+    });
   };
   const onFinish = async () => {
     try {
+      setLoading(true);
       const rankingResponse = await fetch(
         "http://localhost:8000/api/v1/community-rank/",
         {
@@ -97,6 +70,8 @@ function App() {
       setRanking(rankingJson.data);
     } catch (error) {
       throw error.message;
+    } finally {
+      setLoading(false);
     }
   };
   const onFinishFailed = (errorInfo) => {
@@ -104,11 +79,12 @@ function App() {
   };
   useEffect(() => {
     const getData = async () => {
+      setLoading(true);
+      console.log("setLoading");
       const urls = [
         "http://localhost:8000/api/v1/community/",
         "http://localhost:8000/api/v1/crimesReport/",
         "http://localhost:8000/api/v1/service/",
-        "http://localhost:8000/api/v1/income/",
       ];
       try {
         const jsons = await Promise.all(
@@ -118,11 +94,6 @@ function App() {
             return json;
           })
         );
-        const orderedIncome = jsons[3].sort(
-          (a, b) =>
-            a.total_household_total_income - b.total_household_total_income
-        );
-
         const rankingResp = await fetch(
           "http://localhost:8000/api/v1/community-rank/",
           {
@@ -138,9 +109,8 @@ function App() {
           }
         );
         const rankingJson = await rankingResp.json();
-
         setService(jsons[2]);
-        setIncome(orderedIncome);
+        // setIncome(orderedIncome);
         setRanking(rankingJson.data);
       } catch (error) {
         setError(error);
@@ -149,8 +119,8 @@ function App() {
       }
     };
     getData();
-  }, [values.crimes, values.income, values.services]);
-  if (loading) return <p>Loading...</p>;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   if (error) return <p>Error: {error.message}</p>;
   const class_colors = {
     1: "#e41a1c",
@@ -161,24 +131,20 @@ function App() {
 
   const displayCommunities = (ranking) => {
     const results = ranking.map((comm, index) => {
-      const { name, score, income, sector, service_count, multipolygon } = comm;
-
-      let isServiceCommunities;
-      if (serviceCommunities) {
-        for (const key in serviceCommunities) {
-          if (key === name) isServiceCommunities = key === name;
-        }
-      }
+      const { id, name, score, income, sector, service_count, multipolygon } =
+        comm;
       return (
         <Polygon
           key={index}
           weight={1}
           fillOpacity="0.4"
           pathOptions={{
-            color: isServiceCommunities
-              ? "yellow"
-              : class_colors[comm.class_code],
-            fillColor: "yellow",
+            color:
+              id == highlightedCommunity
+                ? "white"
+                : class_colors[comm.class_code],
+            weight: id == highlightedCommunity ? 5 : 2,
+            fillColor: "rgb(138, 197, 143)",
           }}
           positions={JSON.parse(multipolygon).coordinates}
         >
@@ -192,7 +158,7 @@ function App() {
               <br />
               <span>income :{income}</span>
               <br />
-              <span>score :{score}</span>
+              <span>score :{(score * 1000).toFixed()}</span>
             </div>
           </Tooltip>
         </Polygon>
@@ -201,30 +167,39 @@ function App() {
     return results;
   };
   const displayServices = (services) => {
-    let customIcon = L.divIcon({
-      className: "custom-marker",
-      html: Hospital,
-    });
-    const hospital = L.divIcon({
-      className: "custom-marker-hospital",
-      html: Hospital,
-    });
-    const attraction = L.divIcon({
-      className: "custom-marker-attraction",
-      html: '<div class="custom-marker-inner-attraction"></div>',
-    });
-    const transform = (type, { point: { coordinates }, name, address }) => {
+    const transform = (type, { address, point: { coordinates }, name }) => {
       let icon;
+      let showTitle;
+      showTitle = zoomLevel >= 14;
       switch (type) {
         case "Hospital":
         case "PHS Clinic":
-          icon = hospital;
+          icon = L.divIcon({
+            html: `<div class='hospital'><span class='marker-title'  style='display: ${
+              showTitle ? "block" : "none"
+            };'>${name}</span></div>`,
+          });
           break;
         case "Attraction":
-          icon = attraction;
+          icon = L.divIcon({
+            html: `<div class='attraction'><span class='marker-title'  style='display: ${
+              showTitle ? "block" : "none"
+            };'>${name}</span></div>`,
+          });
+          break;
+        case "Library":
+          icon = L.divIcon({
+            html: `<div class='library'><span class='marker-title'  style='display: ${
+              showTitle ? "block" : "none"
+            };'>${name}</span></div>`,
+          });
           break;
         default:
-          icon = customIcon;
+          icon = L.divIcon({
+            html: `<div class='custom'><span class='marker-title'  style='display: ${
+              showTitle ? "block" : "none"
+            };'>${name}</span></div>`,
+          });
           break;
       }
       return (
@@ -244,88 +219,74 @@ function App() {
     }, []);
     return result;
   };
-  const displayIncome = (income) => {
-    const getColor = (index, total) => {
-      const startColor = [255, 165, 0];
-      const endColor = [0, 0, 140];
-      const ratio = index / total;
-      const color = endColor.map((start, i) => {
-        return Math.round(start + ratio * (startColor[i] - start));
-      });
-      return `rgb(${color.join(",")})`;
-    };
-
-    const polygonOptions = income.map((pos, index) => ({
-      fillColor: getColor(index, income.length - 1),
-      color: getColor(index, income.length - 1),
-      weight: 1,
-    }));
-    const results = income.map((section, index) => {
-      const {
-        total_household_total_income,
-        ward,
-        polygon: { coordinates },
-      } = section;
-
-      return (
-        <Polygon
-          key={index}
-          weight={1}
-          fillOpacity="0.4"
-          pathOptions={polygonOptions[index]}
-          positions={coordinates}
-        >
-          <Tooltip sticky>
-            <div className="">
-              <span>{ward}</span>
-              <br />
-              <span>{total_household_total_income}</span>
-            </div>
-          </Tooltip>
-        </Polygon>
-      );
-    });
-    return results;
-  };
-  const getMaxValue = (currentInput) => {
-    const total =
-      values.crimes + values.services + values.income - values[currentInput];
-    return 10 - total;
-  };
-
+  const handleZoomChange = useCallback((newZoom) => {
+    setZoomLevel(newZoom);
+  }, []);
+  console.log(zoomLevel);
   return (
-    <Row>
-      <Col span={18} push={6}>
-        <MapContainer
-          center={[51.0447, -114.0719]}
-          zoom={13}
-          style={{ height: "100vh", width: "100vw", zIndex: 0 }}
-        >
-          <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
-          {displayIncome(income)}
-          {displayCommunities(ranking)}
-          {displayServices(services)}
-          <MapController position={position} />
-        </MapContainer>
-      </Col>
-      <Col className="sidecar" span={6} pull={18} style={{ height: "100vh" }}>
+    <div className="container">
+      <div className="sidecar">
         <WeightsForm
           onFinish={onFinish}
           onFinishFailed={onFinishFailed}
-          getMaxValue={getMaxValue}
           values={values}
           onCrimesChange={onCrimesChange}
           onServicesChange={onServicesChange}
           onIncomeChange={onIncomeChange}
         />
+        <Divider
+          style={{
+            fontSize: "12px",
+            color: "rgb(126, 126, 126)",
+            margin: "0px 0px 4px 0px",
+            letterSpacing: "6px",
+          }}
+          orientation="left"
+        >
+          RANKING LIST
+        </Divider>
         <div className="ranking-wrapper">
-          <RankingList ranking={ranking} setPosition={setPosition} />
+          {loading ? (
+            Array.from({ length: 4 }).map((_, index) => (
+              <Skeleton key={index} loading={loading} active />
+            ))
+          ) : (
+            <RankingList
+              ranking={ranking}
+              setPosition={setPosition}
+              setHighlightedCommunity={setHighlightedCommunity}
+              loading={loading}
+            />
+          )}
         </div>
-      </Col>
-    </Row>
+      </div>
+      <div className="my-map">
+        <MapContainer
+          center={[51.0447, -114.0719]}
+          zoom={13}
+          style={{
+            height: "100vh",
+            width: "100%",
+            zIndex: 0,
+          }}
+        >
+          <TileLayer
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          />
+
+          {/* {displayIncome(income)} */}
+
+          {displayCommunities(ranking)}
+
+          {displayServices(services)}
+
+          <MapController position={position} />
+          <Legend />
+          <ZoomHandler onZoomChange={handleZoomChange} />
+        </MapContainer>
+      </div>
+    </div>
   );
 }
 
