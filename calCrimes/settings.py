@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     "django_cleanup.apps.CleanupConfig",
     "rest_framework",
     "rest_framework_gis",
+    "clearcache",
     # Local apps
     "backend.apps.BackendConfig",  # in apps.py
     # "frontend.apps.FrontendConfig",
