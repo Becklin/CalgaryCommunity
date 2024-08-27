@@ -134,8 +134,13 @@ class community_rank(generics.CreateAPIView):
         min_record = min(records, key=lambda x: x["total_whole_year"])
         max_record = max(records, key=lambda x: x["total_whole_year"])
         records_normalized = [
-            (r["total_whole_year"] - min_record["total_whole_year"])
-            / (max_record["total_whole_year"] - min_record["total_whole_year"])
+            (
+                1
+                - (
+                    (r["total_whole_year"] - min_record["total_whole_year"])
+                    / (max_record["total_whole_year"] - min_record["total_whole_year"])
+                )
+            )
             for r in records
         ]
         # Weights
