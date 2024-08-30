@@ -13,6 +13,8 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 from pathlib import Path
 import environ
 import os
+import django_heroku
+import dj_database_url
 
 # Initialize environment variables
 env = environ.Env()
@@ -28,8 +30,7 @@ env.read_env(os.path.join(BASE_DIR, ".env"))
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-n@&=_fv5ksior+&g3ycbpq*rs9vb5ssg!kewazpge0lk)5!^j+"
-
+SECRET_KEY = os.getenv("SECRET_KEY", "fallback-secret-key")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
@@ -101,12 +102,12 @@ WSGI_APPLICATION = "calCrimes.wsgi.application"
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 DATABASES = {
     "default": {
-        "ENGINE": env("DB_ENGINE"),
-        "NAME": env("DB_NAME"),
-        "USER": env("DB_USER"),
-        "PASSWORD": env("DB_PASSWORD"),
-        "HOST": env("DB_HOST"),
-        "PORT": env("DB_PORT"),
+        "ENGINE": os.getenv("DB_ENGINE", "django.contrib.gis.db.backends.postgis"),
+        "NAME": os.getenv("DB_NAME"),
+        "USER": os.getenv("DB_USER"),
+        "PASSWORD": os.getenv("DB_PASSWORD"),
+        "HOST": os.getenv("DB_HOST"),
+        "PORT": os.getenv("DB_PORT"),
     }
 }
 # Password validation
@@ -146,7 +147,11 @@ USE_TZ = True
 STATIC_URL = "static/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 MEDIA_URL = "/media/"
-
+# Ensure static files are handled
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
+STATICFILES_DIRS = (os.path.join(BASE_DIR, "static"),)
+# Activate Django-Heroku.
+django_heroku.settings(locals())
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
