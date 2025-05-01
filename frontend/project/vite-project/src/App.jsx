@@ -87,6 +87,7 @@ function App() {
       const urls = [
         "http://localhost:8000/api/v1/community/",
         "http://localhost:8000/api/v1/service/",
+        "http://localhost:8000/api/v1/fetch-data/",
       ];
       try {
         const jsons = await Promise.all(
@@ -137,7 +138,6 @@ function App() {
     const results = ranking.map((comm, index) => {
       const { id, name, score, income, sector, service_count, multipolygon } =
         comm;
-      console.log("map", id, highlightedCommunity);
       return (
         <Polygon
           key={index}

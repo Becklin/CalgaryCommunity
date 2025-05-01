@@ -53,7 +53,6 @@ elif platform.system() == "Windows":  # Windows
     GEOS_LIBRARY_PATH = os.getenv(
         "GEOS_LIBRARY_PATH", r"C:\OSGeo4W\bin\geos_c.dll"
     )
-    print('GDAL_LIBRARY_PATH哈哈', GDAL_LIBRARY_PATH)
 else:
     GDAL_LIBRARY_PATH = os.getenv("GDAL_LIBRARY_PATH")
     GEOS_LIBRARY_PATH = os.getenv("GEOS_LIBRARY_PATH")
@@ -114,7 +113,7 @@ WSGI_APPLICATION = "calCrimes.wsgi.application"
 
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
-print(os.getenv("DB_PASSWORD", os.getenv("DB_PORT")))
+
 DATABASES = {
     "default": {
         "ENGINE": os.getenv("DB_ENGINE", "django.contrib.gis.db.backends.postgis"),

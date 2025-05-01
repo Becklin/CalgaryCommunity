@@ -64,3 +64,34 @@ A GIS-based web application that provides community-ranking in Calgary. This pro
 - Add more layers of data like traffic, air quality, etc.
 - Improve mobile responsiveness.
 - Host on Heroku
+
+## APIs
+   ```community boundaries
+   ```
+- https://data.calgary.ca/resource/surr-xmvs.json
+- https://dev.socrata.com/foundry/data.calgary.ca/surr-xmvs
+
+   ```community services
+   ```
+- https://data.calgary.ca/resource/x34e-bcjz.json
+
+   ```Income
+   ```
+- https://data.calgary.ca/resource/wj3a-wgmh.json
+
+   ```Police Department
+   ```
+- https://data.calgary.ca/resource/ap4r-bav3.json
+   ```Parks
+   ```
+- https://data.calgary.ca/resource/kami-qbfh.json
+
+🎯 關聯邏輯（先後順序）
+先定義 models.py 中的模型（比如 Community）
+
+執行 makemigrations 和 migrate → 在資料庫中建立 community 這個表格和欄位。
+
+之後才執行 load_community_csv → 把 CSV 中的資料存入這個 community 表。
+
+如果沒先執行 migrate，資料表不存在，CSV 載入就會報錯（例如：table does not exist）。
+
