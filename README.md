@@ -85,6 +85,9 @@ A GIS-based web application that provides community-ranking in Calgary. This pro
    ```Parks
    ```
 - https://data.calgary.ca/resource/kami-qbfh.json
+   ```Census by Community
+   ```
+- https://data.calgary.ca/resource/rkfr-buzb.json
 
 🎯 關聯邏輯（先後順序）
 先定義 models.py 中的模型（比如 Community）
