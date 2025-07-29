@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
+import dj_database_url
 from pathlib import Path
 import environ
 import os
@@ -134,17 +135,21 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "calCrimes.wsgi.application"
-
 DATABASES = {
-    "default": {
-        "ENGINE": os.getenv("DB_ENGINE", "django.contrib.gis.db.backends.postgis"),
-        "NAME": os.getenv("DB_NAME"),
-        "USER": os.getenv("DB_USER"),
-        "PASSWORD": os.getenv("DB_PASSWORD"),
-        "HOST": os.getenv("DB_HOST"),
-        "PORT": os.getenv("DB_PORT"),
-    }
+    "default": dj_database_url.config(
+        default=os.environ.get("DATABASE_URL"), conn_max_age=600, ssl_require=True
+    )
 }
+# DATABASES = {
+#     "default": {
+#         "ENGINE": os.getenv("DB_ENGINE", "django.contrib.gis.db.backends.postgis"),
+#         "NAME": os.getenv("DB_NAME"),
+#         "USER": os.getenv("DB_USER"),
+#         "PASSWORD": os.getenv("DB_PASSWORD"),
+#         "HOST": os.getenv("DB_HOST"),
+#         "PORT": os.getenv("DB_PORT"),
+#     }
+# }
 
 AUTH_PASSWORD_VALIDATORS = [
     {
