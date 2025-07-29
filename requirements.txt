@@ -21,3 +21,5 @@ pillow==10.4.0
 geojson==3.1.0
 requests>=2.28.0
 pandas==2.2.2
+psycopg2-binary
+gdal
