@@ -39,3 +39,4 @@ typing_extensions==4.7.1
 tzdata==2024.1
 Werkzeug==2.3.6
 whitenoise==6.7.0
+

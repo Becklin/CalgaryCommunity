@@ -25,39 +25,61 @@ print("BASE_DIR", BASE_DIR)
 # Read .env file
 env.read_env(os.path.join(BASE_DIR, ".env"))
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 SECRET_KEY = os.getenv("SECRET_KEY", "fallback-secret-key")
-DEBUG = True
 
-ALLOWED_HOSTS = []
+DEBUG = os.getenv("DEBUG", "False") == "True"
+
+ALLOWED_HOSTS = [os.getenv("RENDER_EXTERNAL_HOSTNAME", "localhost")]
 
 import os, platform
 
-# Application definition
-GDAL_LIBRARY_PATH = "C:\\OSGeo4W\\bin\\gdal310.dll"  # Windows
-GEOS_LIBRARY_PATH = "C:\\OSGeo4W\\bin\\geos_c.dll"  # Default for Windows
+system = platform.system()
 
-if platform.system() == "Darwin":  # macOS
+if system == "Windows":
+    GDAL_LIBRARY_PATH = os.getenv("GDAL_LIBRARY_PATH", r"C:\OSGeo4W\bin\gdal310.dll")
+    GEOS_LIBRARY_PATH = os.getenv("GEOS_LIBRARY_PATH", r"C:\OSGeo4W\bin\geos_c.dll")
+
+elif system == "Darwin":  # macOS
     GDAL_LIBRARY_PATH = os.getenv(
         "GDAL_LIBRARY_PATH", "/opt/homebrew/Cellar/gdal/3.10.2/lib/libgdal.dylib"
     )
     GEOS_LIBRARY_PATH = os.getenv(
         "GEOS_LIBRARY_PATH", "/opt/homebrew/Cellar/geos/3.12.2/lib/libgeos_c.dylib"
     )
-elif platform.system() == "Windows":  # Windows
-    GDAL_LIBRARY_PATH = os.getenv(
-        "GDAL_LIBRARY_PATH", r"C:\OSGeo4W\bin\gdal310.dll"
-    )
-    GEOS_LIBRARY_PATH = os.getenv(
-        "GEOS_LIBRARY_PATH", r"C:\OSGeo4W\bin\geos_c.dll"
-    )
+
+elif system == "Linux":
+    # ⚠️ Render 通常不需要設定 GDAL_LIBRARY_PATH / GEOS_LIBRARY_PATH
+    GDAL_LIBRARY_PATH = os.getenv("GDAL_LIBRARY_PATH", "/usr/lib/libgdal.so")
+    GEOS_LIBRARY_PATH = os.getenv("GEOS_LIBRARY_PATH", "/usr/lib/libgeos_c.so")
+
 else:
     GDAL_LIBRARY_PATH = os.getenv("GDAL_LIBRARY_PATH")
     GEOS_LIBRARY_PATH = os.getenv("GEOS_LIBRARY_PATH")
+
     if not GDAL_LIBRARY_PATH or not GEOS_LIBRARY_PATH:
         raise RuntimeError("Unsupported OS or missing GDAL/GEOS library paths")
+
+
+# if os.getenv("DJANGO_ENV") == "development":
+#     GDAL_LIBRARY_PATH = "C:\\OSGeo4W\\bin\\gdal310.dll"  # Windows
+#     GEOS_LIBRARY_PATH = "C:\\OSGeo4W\\bin\\geos_c.dll"  # Default for Windows
+
+# if platform.system() == "Darwin":  # macOS
+#     GDAL_LIBRARY_PATH = os.getenv(
+#         "GDAL_LIBRARY_PATH", "/opt/homebrew/Cellar/gdal/3.10.2/lib/libgdal.dylib"
+#     )
+#     GEOS_LIBRARY_PATH = os.getenv(
+#         "GEOS_LIBRARY_PATH", "/opt/homebrew/Cellar/geos/3.12.2/lib/libgeos_c.dylib"
+#     )
+# elif platform.system() == "Linux":
+#     GDAL_LIBRARY_PATH = os.getenv("GDAL_LIBRARY_PATH", "/usr/lib/libgdal.so")
+#     GEOS_LIBRARY_PATH = os.getenv("GEOS_LIBRARY_PATH", "/usr/lib/libgeos_c.so")
+# else:
+#     GDAL_LIBRARY_PATH = os.getenv("GDAL_LIBRARY_PATH")
+#     GEOS_LIBRARY_PATH = os.getenv("GEOS_LIBRARY_PATH")
+#     if not GDAL_LIBRARY_PATH or not GEOS_LIBRARY_PATH:
+#         raise RuntimeError("Unsupported OS or missing GDAL/GEOS library paths")
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -79,6 +101,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -110,9 +133,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "calCrimes.wsgi.application"
 
-
-# Database
-# https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
 DATABASES = {
     "default": {
@@ -152,14 +172,23 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
-STATIC_URL = "static/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 MEDIA_URL = "/media/"
 
-STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
-STATICFILES_DIRS = (os.path.join(BASE_DIR, "static"),)
-# Activate Django-Heroku.
-django_heroku.settings(locals())
+STATIC_URL = "/static/"
+if os.getenv("DJANGO_ENV") == "development":
+    STATICFILES_DIRS = [
+        os.path.join(BASE_DIR, "static"),
+    ]
+else:
+    ## python manage.py collectstatic
+    STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
+
+
+# STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
+# STATICFILES_DIRS = (os.path.join(BASE_DIR, "static"),)
+
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
