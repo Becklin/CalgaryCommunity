@@ -18,10 +18,13 @@ import dj_database_url
 
 # Initialize environment variables
 env = environ.Env()
+# 根據 DJANGO_ENV 判斷要載入哪個 .env
+ENV_FILE = ".env.prod" if os.getenv("DJANGO_ENV") == "production" else ".env.dev"
+environ.Env.read_env(os.path.join(Path(__file__).resolve().parent.parent, ENV_FILE))
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-print("BASE_DIR", BASE_DIR)
+
 # Read .env file
 env.read_env(os.path.join(BASE_DIR, ".env"))
 
@@ -132,7 +135,6 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "calCrimes.wsgi.application"
-
 
 DATABASES = {
     "default": {

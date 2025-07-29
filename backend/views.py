@@ -1,6 +1,4 @@
 from django.views import View
-from numpy import sort
-import pandas as pd
 import requests
 import json
 from django.contrib.gis.geos import MultiPolygon, Point
@@ -29,7 +27,6 @@ class FetchAndProcessDataView(View):
 
     def get(self, request):
         result = self.fetch_data_from_api(self.API_URLS["boundaries"])
-        print(result)
         return JsonResponse({"data": result})
 
     # Step 1: 抓取 API 資料
@@ -37,7 +34,6 @@ class FetchAndProcessDataView(View):
         response = requests.get(url)
         response.raise_for_status()
         result = response.json()
-        print(result)
         return result
 
 

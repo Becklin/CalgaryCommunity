@@ -15,7 +15,6 @@ class RankingService:
         records = fetch_crimes_reports()
         communities = list(Community.objects.all().values())
         services = Community.objects.services_within_5km()
-        # print('服務', services)
         for comm in communities:
             polygon = comm.get("multipolygon")
             if isinstance(polygon, MultiPolygon):
@@ -25,22 +24,17 @@ class RankingService:
                     "type": "Point",
                     "coordinates": [polygon.centroid.x, polygon.centroid.y],
                 }
-        print('records', records)
 
         community_dict = {comm["id"]: comm for comm in communities}
 
         community_ids = set(community_dict.keys())
         record_ids = {record["community_id"] for record in records}
-        # print('community_ids', community_ids)
-        print('record_ids', record_ids)
 
         # Remove missing ids
         missing_ids = community_ids - record_ids
         for id in missing_ids:
             community_dict.pop(id, None)
             services.pop(id, None)
-        print('服務', services)
-
         # Normalize
         min_service = min([y for x, y in services.items()])
         max_service = max([y for x, y in services.items()])

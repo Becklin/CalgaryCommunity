@@ -77,6 +77,5 @@ class Command(BaseCommand):
                 december=row["DEC"],
             )
             crimes_report.save()
-            # print("crimes_report", crimes_report.community)
         print("notexist", notexist)
         self.stdout.write(self.style.SUCCESS("Successfully loaded geospatial data"))
