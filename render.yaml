@@ -5,9 +5,9 @@ services:
     plan: free
     runtime: python
     buildCommand: |
-      apt-get update && apt-get install -y gdal-bin libgdal-dev &&
+      apt-get update &&
+      apt-get install -y binutils libproj-dev gdal-bin &&
       pip install --upgrade pip &&
-      pip install wheel &&
       pip install -r requirements.txt
     startCommand: "gunicorn calCrimes.wsgi"
     envVars:
