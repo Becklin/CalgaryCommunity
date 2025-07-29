@@ -4,7 +4,8 @@ services:
     env: python
     plan: free
     runtime: python
-    buildCommand: >
+    buildCommand: |
+      apt-get update && apt-get install -y gdal-bin libgdal-dev &&
       pip install --upgrade pip &&
       pip install wheel &&
       pip install -r requirements.txt
