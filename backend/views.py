@@ -2,7 +2,6 @@ from django.views import View
 import requests
 import json
 from django.contrib.gis.geos import MultiPolygon, Point
-from django.shortcuts import render
 from rest_framework import generics
 from django.http import JsonResponse
 from .models import fetch_crimes_reports, Community, CrimesReport, Service, Income
