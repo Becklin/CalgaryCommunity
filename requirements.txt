@@ -1,3 +1,4 @@
+wheel
 Django==5.0.7
 djangorestframework==3.15.2
 djangorestframework-gis==1.0
@@ -6,7 +7,6 @@ django-environ==0.11.2
 django-cleanup==8.1.0
 django-clearcache==1.2.1
 django-cors-headers==4.4.0
-django-heroku==0.3.1
 django-storages==1.14.3
 dj-database-url==2.2.0
 gunicorn==23.0.0

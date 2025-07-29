@@ -3,9 +3,10 @@ services:
     name: calgarycommunity-django
     env: python
     plan: free
-    buildCommand: |
+    buildCommand: >
+      pip install --upgrade pip &&
+      pip install wheel &&
       pip install -r requirements.txt
-      python manage.py collectstatic --noinput
     startCommand: "gunicorn calCrimes.wsgi"
     envVars:
       - key: DEBUG
