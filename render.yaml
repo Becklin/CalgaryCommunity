@@ -2,8 +2,9 @@ services:
   - type: web
     name: calgarycommunity-django
     env: docker
-    image: beckdocker/calgarycommunity
+    image:
+      url: beckdocker/calgarycommunity
     plan: free
     envVars:
       - key: DATABASE_URL
-        value: postgresql://postgres:yourpassword@db.flsgrbtpuhbgdpsokfss.supabase.co:5432/postgres
+        value: postgresql://postgres:Urking1!@db.flsgrbtpuhbgdpsokfss.supabase.co:5432/postgres
