@@ -37,52 +37,31 @@ ALLOWED_HOSTS = [os.getenv("RENDER_EXTERNAL_HOSTNAME", "localhost")]
 
 import os, platform
 
-system = platform.system()
+if os.getenv("DJANGO_ENV") == "development":
+    system = platform.system()
+    if system == "Windows":
+        GDAL_LIBRARY_PATH = os.getenv(
+            "GDAL_LIBRARY_PATH", r"C:\OSGeo4W\bin\gdal310.dll"
+        )
+        GEOS_LIBRARY_PATH = os.getenv("GEOS_LIBRARY_PATH", r"C:\OSGeo4W\bin\geos_c.dll")
 
-if system == "Windows":
-    GDAL_LIBRARY_PATH = os.getenv("GDAL_LIBRARY_PATH", r"C:\OSGeo4W\bin\gdal310.dll")
-    GEOS_LIBRARY_PATH = os.getenv("GEOS_LIBRARY_PATH", r"C:\OSGeo4W\bin\geos_c.dll")
+    elif system == "Darwin":  # macOS
+        GDAL_LIBRARY_PATH = os.getenv(
+            "GDAL_LIBRARY_PATH", "/opt/homebrew/Cellar/gdal/3.10.2/lib/libgdal.dylib"
+        )
+        GEOS_LIBRARY_PATH = os.getenv(
+            "GEOS_LIBRARY_PATH", "/opt/homebrew/Cellar/geos/3.12.2/lib/libgeos_c.dylib"
+        )
 
-elif system == "Darwin":  # macOS
-    GDAL_LIBRARY_PATH = os.getenv(
-        "GDAL_LIBRARY_PATH", "/opt/homebrew/Cellar/gdal/3.10.2/lib/libgdal.dylib"
-    )
-    GEOS_LIBRARY_PATH = os.getenv(
-        "GEOS_LIBRARY_PATH", "/opt/homebrew/Cellar/geos/3.12.2/lib/libgeos_c.dylib"
-    )
+    elif system == "Linux":
+        GDAL_LIBRARY_PATH = os.getenv("GDAL_LIBRARY_PATH", "/usr/lib/libgdal.so")
+        GEOS_LIBRARY_PATH = os.getenv("GEOS_LIBRARY_PATH", "/usr/lib/libgeos_c.so")
 
-elif system == "Linux":
-    # ⚠️ Render 通常不需要設定 GDAL_LIBRARY_PATH / GEOS_LIBRARY_PATH
-    GDAL_LIBRARY_PATH = os.getenv("GDAL_LIBRARY_PATH", "/usr/lib/libgdal.so")
-    GEOS_LIBRARY_PATH = os.getenv("GEOS_LIBRARY_PATH", "/usr/lib/libgeos_c.so")
-
-else:
-    GDAL_LIBRARY_PATH = os.getenv("GDAL_LIBRARY_PATH")
-    GEOS_LIBRARY_PATH = os.getenv("GEOS_LIBRARY_PATH")
-
-    if not GDAL_LIBRARY_PATH or not GEOS_LIBRARY_PATH:
-        raise RuntimeError("Unsupported OS or missing GDAL/GEOS library paths")
-
-
-# if os.getenv("DJANGO_ENV") == "development":
-#     GDAL_LIBRARY_PATH = "C:\\OSGeo4W\\bin\\gdal310.dll"  # Windows
-#     GEOS_LIBRARY_PATH = "C:\\OSGeo4W\\bin\\geos_c.dll"  # Default for Windows
-
-# if platform.system() == "Darwin":  # macOS
-#     GDAL_LIBRARY_PATH = os.getenv(
-#         "GDAL_LIBRARY_PATH", "/opt/homebrew/Cellar/gdal/3.10.2/lib/libgdal.dylib"
-#     )
-#     GEOS_LIBRARY_PATH = os.getenv(
-#         "GEOS_LIBRARY_PATH", "/opt/homebrew/Cellar/geos/3.12.2/lib/libgeos_c.dylib"
-#     )
-# elif platform.system() == "Linux":
-#     GDAL_LIBRARY_PATH = os.getenv("GDAL_LIBRARY_PATH", "/usr/lib/libgdal.so")
-#     GEOS_LIBRARY_PATH = os.getenv("GEOS_LIBRARY_PATH", "/usr/lib/libgeos_c.so")
-# else:
-#     GDAL_LIBRARY_PATH = os.getenv("GDAL_LIBRARY_PATH")
-#     GEOS_LIBRARY_PATH = os.getenv("GEOS_LIBRARY_PATH")
-#     if not GDAL_LIBRARY_PATH or not GEOS_LIBRARY_PATH:
-#         raise RuntimeError("Unsupported OS or missing GDAL/GEOS library paths")
+    else:
+        GDAL_LIBRARY_PATH = os.getenv("GDAL_LIBRARY_PATH")
+        GEOS_LIBRARY_PATH = os.getenv("GEOS_LIBRARY_PATH")
+        if not GDAL_LIBRARY_PATH or not GEOS_LIBRARY_PATH:
+            raise RuntimeError("Unsupported OS or missing GDAL/GEOS library paths")
 
 INSTALLED_APPS = [
     "django.contrib.admin",
