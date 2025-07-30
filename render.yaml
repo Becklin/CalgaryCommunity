@@ -11,29 +11,5 @@ services:
       pip install -r requirements.txt
     startCommand: "gunicorn calCrimes.wsgi"
     envVars:
-      - key: DEBUG
-        value: False
-      - key: SECRET_KEY
-        generateValue: true
-      - key: DJANGO_SETTINGS_MODULE
-        value: calCrimes.settings
-      - key: DB_NAME
-        fromDatabase:
-          name: calgarycommunity_fcgj
-          property: database
-      - key: DB_USER
-        fromDatabase:
-          name: calgarycommunity_fcgj
-          property: user
-      - key: DB_PASSWORD
-        fromDatabase:
-          name: calgarycommunity_fcgj
-          property: password
-      - key: DB_HOST
-        fromDatabase:
-          name: calgarycommunity_fcgj
-          property: host
-      - key: DB_PORT
-        fromDatabase:
-          name: calgarycommunity_fcgj
-          property: port
+    - key: DATABASE_URL
+      value: postgresql://postgres:Urking1!@db.flsgrbtpuhbgdpsokfss.supabase.co:5432/postgres

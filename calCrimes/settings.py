@@ -135,17 +135,22 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "calCrimes.wsgi.application"
-
-DATABASES = {
-    "default": {
-        "ENGINE": os.getenv("DB_ENGINE", "django.contrib.gis.db.backends.postgis"),
-        "NAME": os.getenv("DB_NAME"),
-        "USER": os.getenv("DB_USER"),
-        "PASSWORD": os.getenv("DB_PASSWORD"),
-        "HOST": os.getenv("DB_HOST"),
-        "PORT": os.getenv("DB_PORT"),
+if os.getenv("DJANGO_ENV") == "production":
+    print("prod")
+    DATABASES = {"default": dj_database_url.config(conn_max_age=600, ssl_require=True)}
+    DATABASES["default"]["ENGINE"] = "django.contrib.gis.db.backends.postgis"
+else:
+    print("dev")
+    DATABASES = {
+        "default": {
+            "ENGINE": os.getenv("DB_ENGINE", "django.contrib.gis.db.backends.postgis"),
+            "NAME": os.getenv("DB_NAME"),
+            "USER": os.getenv("DB_USER"),
+            "PASSWORD": os.getenv("DB_PASSWORD"),
+            "HOST": os.getenv("DB_HOST"),
+            "PORT": os.getenv("DB_PORT"),
+        }
     }
-}
 
 AUTH_PASSWORD_VALIDATORS = [
     {
