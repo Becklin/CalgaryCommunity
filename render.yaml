@@ -1,15 +1,9 @@
 services:
   - type: web
     name: calgarycommunity-django
-    env: python
+    env: docker
+    image: beckdocker/calgarycommunity
     plan: free
-    runtime: python
-    buildCommand: |
-      apt-get update &&
-      apt-get install -y binutils libproj-dev gdal-bin &&
-      pip install --upgrade pip &&
-      pip install -r requirements.txt
-    startCommand: "gunicorn calCrimes.wsgi"
     envVars:
-    - key: DATABASE_URL
-      value: postgresql://postgres:Urking1!@db.flsgrbtpuhbgdpsokfss.supabase.co:5432/postgres
+      - key: DATABASE_URL
+        value: postgresql://postgres:yourpassword@db.flsgrbtpuhbgdpsokfss.supabase.co:5432/postgres
