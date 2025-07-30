@@ -2,8 +2,7 @@ services:
   - type: web
     name: calgarycommunity-django
     env: docker
-    image:
-      url: beckdocker/calgarycommunity
+    image: beckdocker/calgarycommunity
     plan: free
     envVars:
       - key: DATABASE_URL
