@@ -14,10 +14,11 @@ import dj_database_url
 from pathlib import Path
 import environ
 import os
+from urllib.parse import urlparse
 
 # Initialize environment variables
 env = environ.Env()
-# 根據 DJANGO_ENV 判斷要載入哪個 .env
+
 ENV_FILE = ".env.prod" if os.getenv("DJANGO_ENV") == "production" else ".env.dev"
 environ.Env.read_env(os.path.join(Path(__file__).resolve().parent.parent, ENV_FILE))
 
@@ -30,10 +31,7 @@ env.read_env(os.path.join(BASE_DIR, ".env"))
 
 SECRET_KEY = os.getenv("SECRET_KEY", "fallback-secret-key")
 
-DEBUG = os.getenv("DEBUG", "False") == "True"
-
-
-# ALLOWED_HOSTS = [os.getenv("RENDER_EXTERNAL_HOSTNAME", "localhost")]
+DEBUG = os.getenv("DJANGO_DEBUG", "False").lower() == "true"
 
 import os, platform
 
@@ -78,22 +76,29 @@ INSTALLED_APPS = [
     "clearcache",
     # Local apps
     "backend.apps.BackendConfig",  # in apps.py
-    # "frontend.apps.FrontendConfig",
 ]
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
-    "corsheaders.middleware.CorsMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
-
-CORS_ALLOW_ALL_ORIGINS = True
+print("DEBUG = ", DEBUG)
+if DEBUG:
+    CORS_ALLOW_ALL_ORIGINS = True
+    ALLOWED_HOSTS = ["*"]
+else:
+    CORS_ALLOWED_ORIGINS = [
+        "https://calgary-community-frontend.vercel.app",
+        "http://localhost:3000",
+    ]
+    ALLOWED_HOSTS = ["calcommunity.onrender.com"]
 
 ROOT_URLCONF = "calCrimes.urls"
 
@@ -114,9 +119,27 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "calCrimes.wsgi.application"
+
+# Render only supports IPv4, but Supabase's DNS resolves to IPv6 (AAAA record) by default.
+# This forces Render to connect to Supabase using IPv4 instead.
+db_url = os.getenv("DATABASE_URL")
+if db_url and os.getenv("DJANGO_ENV") == "production":
+    try:
+        parsed = urlparse(db_url)
+
+        # 只針對域名解析（不處理已經是 IP 的情況）
+        if parsed.hostname and not parsed.hostname.replace(".", "").isdigit():
+            # 強制解析 IPv4 (A record)
+            ipv4 = socket.getaddrinfo(parsed.hostname, None, socket.AF_INET)[0][4][0]
+            db_url = db_url.replace(parsed.hostname, ipv4)
+            print(f"✅ Using IPv4 for database: {ipv4}")
+    except Exception as e:
+        print(f"⚠️ Could not resolve IPv4: {e}")
+
+
 if os.getenv("DJANGO_ENV") == "production":
-    print("prod")
-    DATABASES = {"default": dj_database_url.config(conn_max_age=600, ssl_require=True)}
+    print("prod", os.getenv("DATABASE_URL"))
+    DATABASES = {"default": dj_database_url.config(conn_max_age=600, default=db_url)}
     DATABASES["default"]["ENGINE"] = "django.contrib.gis.db.backends.postgis"
 else:
     print("dev")
