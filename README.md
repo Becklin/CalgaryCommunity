@@ -27,15 +27,23 @@ A GIS-based web application that provides community-ranking in Calgary. This pro
 2. Install dependencies:
 
    ```bash
-   pip install gdal
+   # Install system GDAL first (required for GeoDjango)
+   # macOS
+   brew install gdal
+   # Ubuntu/Debian
+   sudo apt install gdal-bin libgdal-dev
+   # Windows
+   # Install OSGeo4W or GDAL binaries manually
+
+   # Then install Python dependencies
    pip install -r requirements.txt
    ```
 
-3. Set up PostgreSQL and PostGIS:
+3. Development - Set up PostgreSQL and PostGIS:
 
    - Install PostgreSQL.
    - Enable PostGIS extension.
-   - run Postgresql
+   - Run PostgreSQL server.
 
 4. Run the project:
 
@@ -45,13 +53,22 @@ A GIS-based web application that provides community-ranking in Calgary. This pro
    python manage.py runserver
    ```
 
-   ```bash
-   npm run dev
-   ```
-
 5. Access the application:
 
-   Visit `http://127.0.0.1:8000/` in your browser.
+   Development - `http://127.0.0.1:8000/` in your browser.
+
+## Deployment
+
+1. **Backend endpoint** - https://calcommunity.onrender.com/
+2. **Frontend** - https://calgary-community-frontend.vercel.app/
+   GitHub - https://github.com/Becklin/calgary-community-frontend
+3. **Database** - https://supabase.com/dashboard/project/flsgrbtpuhbgdpsokfss
+   - Use IPv4 for Supabase connection because Render does not support connecting to the database with IPv6.
+   - Supabase provides IPv6 only on paid plans.
+   - In Supabase, enable the PostGIS extension for your database before running the application.
+> **Note:**
+> - Set `DJANGO_DEBUG` to `True` to troubleshoot in production.
+> - A Docker image is used on Render to avoid errors caused by GDAL installation.
 
 ## Usage
 
@@ -59,42 +76,23 @@ A GIS-based web application that provides community-ranking in Calgary. This pro
 - Rank communities based on services, population, or other criteria.
 - View detailed data about selected communities.
 
-## Future Improvements
-
-- Add more layers of data like traffic, air quality, etc.
-- Improve mobile responsiveness.
-- Host on Heroku
-
 ## APIs
-   ```community boundaries
-   ```
+
+**Community boundaries**
 - https://data.calgary.ca/resource/surr-xmvs.json
 - https://dev.socrata.com/foundry/data.calgary.ca/surr-xmvs
 
-   ```community services
-   ```
+**Community services**
 - https://data.calgary.ca/resource/x34e-bcjz.json
 
-   ```Income
-   ```
+**Income**
 - https://data.calgary.ca/resource/wj3a-wgmh.json
 
-   ```Police Department
-   ```
+**Police Department**
 - https://data.calgary.ca/resource/ap4r-bav3.json
-   ```Parks
-   ```
+
+**Parks**
 - https://data.calgary.ca/resource/kami-qbfh.json
-   ```Census by Community
-   ```
+
+**Census by Community**
 - https://data.calgary.ca/resource/rkfr-buzb.json
-
-🎯 關聯邏輯（先後順序）
-先定義 models.py 中的模型（比如 Community）
-
-執行 makemigrations 和 migrate → 在資料庫中建立 community 這個表格和欄位。
-
-之後才執行 load_community_csv → 把 CSV 中的資料存入這個 community 表。
-
-如果沒先執行 migrate，資料表不存在，CSV 載入就會報錯（例如：table does not exist）。
-
