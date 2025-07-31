@@ -69,6 +69,12 @@ A GIS-based web application that provides community-ranking in Calgary. This pro
 > **Note:**
 > - Set `DJANGO_DEBUG` to `True` to troubleshoot in production.
 > - A Docker image is used on Render to avoid errors caused by GDAL installation.
+> - Create docker image
+   ```bash
+   Docker login
+   Docker build -t DockerAccount/imageName .
+   Docker push DockerAccount/imageName
+   ```
 
 ## Usage
 
