@@ -59,6 +59,7 @@ if DEBUG:
     ALLOWED_HOSTS = ["*"]
 else:
     CORS_ALLOWED_ORIGINS = [
+        "https://calgary-community-frontend.vercel.app/",
         "https://calgary-community-frontend-lin-becks-projects.vercel.app",
         "http://localhost:3000",
     ]
