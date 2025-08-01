@@ -2,6 +2,7 @@ from django.db import connection
 from django.contrib.gis.geos import MultiPolygon
 from decimal import Decimal
 from .models import fetch_crimes_reports, Community
+from django.core.cache import cache
 
 
 class RankingService:
@@ -10,71 +11,99 @@ class RankingService:
         self.service_weight = services_weight / 10
         self.income_weight = income_weight / 10
 
+    def get_normalized_data(self):
+        data = cache.get("normalized_data")
+        if data is None:
+            records = fetch_crimes_reports()
+            communities = list(Community.objects.all().values())
+            services = Community.objects.services_within_5km()
+
+            for comm in communities:
+                polygon = comm.get("multipolygon")
+                if isinstance(polygon, MultiPolygon):
+                    comm["multipolygon"] = polygon.geojson
+                    # serialize type of point
+                    comm["centroid"] = {
+                        "type": "Point",
+                        "coordinates": [polygon.centroid.x, polygon.centroid.y],
+                    }
+
+            community_dict = {comm["id"]: comm for comm in communities}
+
+            community_ids = set(community_dict.keys())
+            record_ids = {record["community_id"] for record in records}
+
+            # Remove missing ids
+            missing_ids = community_ids - record_ids
+            for id in missing_ids:
+                community_dict.pop(id, None)
+                services.pop(id, None)
+            # Normalize
+            min_service = min([y for x, y in services.items()])
+            max_service = max([y for x, y in services.items()])
+            # Normalize incomes eg.  {'id': 113, 'class_name': 'Residential', 'class_code': '1'}
+            min_income = min(communities, key=lambda x: x.get("income")).get("income")
+            max_income = max(communities, key=lambda x: x.get("income")).get("income")
+            # Normalize crime records eg. {'community_id': 0, 'total_whole_year': Decimal('2')}
+            min_record = min(records, key=lambda x: x["total_whole_year"]).get(
+                "total_whole_year"
+            )
+            max_record = max(records, key=lambda x: x["total_whole_year"]).get(
+                "total_whole_year"
+            )
+
+            services_normalized = {
+                k: (
+                    (v - min_service) / (max_service - min_service)
+                    if max_service > min_service
+                    else 0
+                )
+                for k, v in services.items()
+            }
+
+            incomes_normalized = {
+                comm["id"]: (
+                    (comm["income"] - min_income) / (max_income - min_income)
+                    if max_income > min_income
+                    else 0
+                )
+                for comm in communities
+            }
+
+            records_normalized = {
+                r["community_id"]: (
+                    1
+                    - ((r["total_whole_year"] - min_record) / (max_record - min_record))
+                    if max_record > min_record
+                    else 0
+                )
+                for r in records
+            }
+            data = {
+                "normalized_services": services_normalized,
+                "normalized_income": incomes_normalized,
+                "normalized_records": records_normalized,
+                "records": records,
+                "communities": communities,
+                "services": services,
+            }
+            cache.set(
+                "normalized_data",
+                data,
+                timeout=7200,
+            )
+        return data
+
     def calculate_scores(self):
-        # prepare data
-        records = fetch_crimes_reports()
-        communities = list(Community.objects.all().values())
-        services = Community.objects.services_within_5km()
-        for comm in communities:
-            polygon = comm.get("multipolygon")
-            if isinstance(polygon, MultiPolygon):
-                comm["multipolygon"] = polygon.geojson
-                # serialize type of point
-                comm["centroid"] = {
-                    "type": "Point",
-                    "coordinates": [polygon.centroid.x, polygon.centroid.y],
-                }
+        # CACHE DATA
+        normalized_data = self.get_normalized_data()
+        communities = normalized_data["communities"]
+        services = normalized_data["services"]
+        records = normalized_data["records"]
+        services_normalized = normalized_data["normalized_services"]
+        incomes_normalized = normalized_data["normalized_income"]
+        records_normalized = normalized_data["normalized_records"]
 
-        community_dict = {comm["id"]: comm for comm in communities}
-
-        community_ids = set(community_dict.keys())
-        record_ids = {record["community_id"] for record in records}
-
-        # Remove missing ids
-        missing_ids = community_ids - record_ids
-        for id in missing_ids:
-            community_dict.pop(id, None)
-            services.pop(id, None)
-        # Normalize
-        min_service = min([y for x, y in services.items()])
-        max_service = max([y for x, y in services.items()])
-        # Normalize incomes eg.  {'id': 113, 'class_name': 'Residential', 'class_code': '1'}
-        min_income = min(communities, key=lambda x: x.get("income")).get("income")
-        max_income = max(communities, key=lambda x: x.get("income")).get("income")
-        # Normalize crime records eg. {'community_id': 0, 'total_whole_year': Decimal('2')}
-        min_record = min(records, key=lambda x: x["total_whole_year"]).get(
-            "total_whole_year"
-        )
-        max_record = max(records, key=lambda x: x["total_whole_year"]).get(
-            "total_whole_year"
-        )
-
-        services_normalized = {
-            k: (
-                (v - min_service) / (max_service - min_service)
-                if max_service > min_service
-                else 0
-            )
-            for k, v in services.items()
-        }
-
-        incomes_normalized = {
-            comm["id"]: (
-                (comm["income"] - min_income) / (max_income - min_income)
-                if max_income > min_income
-                else 0
-            )
-            for comm in communities
-        }
-
-        records_normalized = {
-            r["community_id"]: (
-                1 - ((r["total_whole_year"] - min_record) / (max_record - min_record))
-                if max_record > min_record
-                else 0
-            )
-            for r in records
-        }
         # calculate scores based on weights
         for comm in communities:
             comm_id = comm["id"]
