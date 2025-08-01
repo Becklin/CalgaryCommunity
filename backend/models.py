@@ -125,3 +125,12 @@ class Income(models.Model):
     _150_000_to_199_999 = models.IntegerField()
     _200_000_and_over = models.IntegerField()
     polygon = models.MultiPolygonField()
+
+
+class NormalizedDataCache(models.Model):
+    key = models.CharField(max_length=100, unique=True)
+    data = models.JSONField()
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Cache {self.key} updated at {self.updated_at}"

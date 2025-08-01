@@ -1,8 +1,9 @@
 from django.db import connection
 from django.contrib.gis.geos import MultiPolygon
 from decimal import Decimal
-from .models import fetch_crimes_reports, Community
-from django.core.cache import cache
+from .models import fetch_crimes_reports, Community, NormalizedDataCache
+from decimal import Decimal
+import datetime
 
 
 class RankingService:
@@ -11,13 +12,29 @@ class RankingService:
         self.service_weight = services_weight / 10
         self.income_weight = income_weight / 10
 
-    def get_normalized_data(self):
-        data = cache.get("normalized_data")
-        if data is None:
+    def convert_special_types(self, obj):
+        if isinstance(obj, dict):
+            return {k: self.convert_special_types(v) for k, v in obj.items()}
+        elif isinstance(obj, list):
+            return [self.convert_special_types(i) for i in obj]
+        elif isinstance(obj, Decimal):
+            return float(obj)
+        elif isinstance(obj, datetime.datetime):
+            return obj.isoformat()
+        else:
+            return obj
+
+    def get_normalized_data_from_db_or_compute(self):
+        cache_key = "normalized_data"
+
+        try:
+            cache_obj = NormalizedDataCache.objects.get(key=cache_key)
+            data = cache_obj.data
+        except NormalizedDataCache.DoesNotExist:
+            print("trigger fetch")
             records = fetch_crimes_reports()
             communities = list(Community.objects.all().values())
             services = Community.objects.services_within_5km()
-
             for comm in communities:
                 polygon = comm.get("multipolygon")
                 if isinstance(polygon, MultiPolygon):
@@ -87,16 +104,19 @@ class RankingService:
                 "communities": communities,
                 "services": services,
             }
-            cache.set(
-                "normalized_data",
-                data,
-                timeout=7200,
+            ## Your data dictionary contains Decimal objects (likely from numeric fields retrieved from the database).
+            # When you use update_or_create(..., defaults={"data": data}) to write this data into a JSONField,
+            # Django internally uses json.dumps() to serialize it.
+            # However, json.dumps() cannot directly serialize Decimal types, which causes the error.
+            data = self.convert_special_types(data)
+            NormalizedDataCache.objects.update_or_create(
+                key=cache_key, defaults={"data": data}
             )
         return data
 
     def calculate_scores(self):
         # CACHE DATA
-        normalized_data = self.get_normalized_data()
+        normalized_data = self.get_normalized_data_from_db_or_compute()
         communities = normalized_data["communities"]
         services = normalized_data["services"]
         records = normalized_data["records"]
