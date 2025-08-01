@@ -32,11 +32,11 @@ class CommunityManager(models.Manager):
 
 def fetch_crimes_reports():
     sql = """
-        SELECT community_id, 
+        SELECT community_id,
                SUM(whole_year) AS total_whole_year
         FROM (
-            SELECT community_id, 
-                   category, 
+            SELECT community_id,
+                   category,
                    SUM(january + february + march + april + may + june + july + august + september + october + november + december) AS whole_year
             FROM backend_crimesreport
             GROUP BY community_id, category
