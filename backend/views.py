@@ -7,6 +7,7 @@ from django.http import JsonResponse
 from .models import fetch_crimes_reports, Community, CrimesReport, Service, Income
 from decimal import Decimal
 from .serializers import (
+    CommunityBasicSerializer,
     CommunitySerializer,
     CrimesReportSerializer,
     ServiceSerializer,
@@ -38,8 +39,8 @@ class FetchAndProcessDataView(View):
 
 # Create your views here.
 class CommunityListView(generics.ListAPIView):
-    queryset = Community.objects.all()
-    serializer_class = CommunitySerializer
+    queryset = Community.objects.only("id", "name", "multipolygon", "class_name")
+    serializer_class = CommunityBasicSerializer
     name = "community"
 
 

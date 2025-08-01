@@ -88,9 +88,6 @@ class CrimesReport(models.Model):
     november = models.IntegerField(null=True, blank=True)
     december = models.IntegerField(null=True, blank=True)
 
-    # def __str__(self):
-    #     return self.community_name
-
 
 class Service(models.Model):
     TYPE_CHOICES = [
@@ -109,7 +106,7 @@ class Service(models.Model):
     name = models.CharField(max_length=255)
     address = models.CharField(max_length=255)
     comm_code = models.CharField(max_length=10)
-    point = models.PointField()  # 需要安装 django.contrib.gis
+    point = models.PointField()
 
     def __str__(self):
         return self.name

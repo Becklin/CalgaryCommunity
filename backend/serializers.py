@@ -8,6 +8,12 @@ class CommunitySerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class CommunityBasicSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Community
+        fields = ("id", "name", "multipolygon", "class_name")
+
+
 class CrimesReportSerializer(serializers.ModelSerializer):
     class Meta:
         model = CrimesReport

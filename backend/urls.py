@@ -4,7 +4,7 @@ from django.conf.urls import include
 from rest_framework.urlpatterns import format_suffix_patterns
 
 urlpatterns = [
-    path('fetch-data/', views.FetchAndProcessDataView.as_view(), name='fetch_data'),
+    path("fetch-data/", views.FetchAndProcessDataView.as_view(), name="fetch_data"),
     path(
         "community/",
         views.CommunityListView.as_view(),
