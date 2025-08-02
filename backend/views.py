@@ -26,15 +26,15 @@ class FetchAndProcessDataView(View):
     }
 
     def get(self, request):
-        result = self.fetch_data_from_api(self.API_URLS["boundaries"])
-        return JsonResponse({"data": result})
+        results = {}
+        for key, url in self.API_URLS.items():
+            results[key] = self.fetch_data_from_api(url)
+        return JsonResponse({"data": results})
 
-    # Step 1: 抓取 API 資料
     def fetch_data_from_api(self, url):
         response = requests.get(url)
         response.raise_for_status()
-        result = response.json()
-        return result
+        return response.json()
 
 
 # Create your views here.
