@@ -87,15 +87,16 @@ def community_service_counts(request):
 
 class community_rank(generics.CreateAPIView):
     name = "community_rank"
+    print("community_rank")
 
     def post(self, request, *args, **kwargs):
         serializer = RankingSerializer(data=request.data)
-
+        print("開始計算")
         if serializer.is_valid():
             crimesWeights = serializer.validated_data["crimes"]
             servicesWeights = serializer.validated_data["services"]
             incomeWeights = serializer.validated_data["income"]
-
+        print(crimesWeights, servicesWeights, incomeWeights)
         ranking_service = RankingService(crimesWeights, servicesWeights, incomeWeights)
         community_with_scores = ranking_service.calculate_scores()
         return JsonResponse({"data": community_with_scores})
